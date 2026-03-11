@@ -1,101 +1,108 @@
 package BookMyStay;
+
 import java.util.*;
 
-    public class UseCaseBookMyStay {
+// Add-On Service class
+class Service {
 
-        // Queue to store booking requests (FIFO)
-        private Queue<BookingRequest> requestQueue = new LinkedList<>();
+    private String serviceName;
+    private double cost;
 
-        // Inventory for room types
-        private Map<String, Integer> inventory = new HashMap<>();
+    public Service(String serviceName, double cost) {
+        this.serviceName = serviceName;
+        this.cost = cost;
+    }
 
-        // Map room type -> allocated room IDs
-        private Map<String, Set<String>> allocatedRooms = new HashMap<>();
+    public String getServiceName() {
+        return serviceName;
+    }
 
-        // Set to ensure global uniqueness of room IDs
-        private Set<String> usedRoomIds = new HashSet<>();
+    public double getCost() {
+        return cost;
+    }
+}
 
 
-        public UseCaseBookMyStay() {
-            // Initial inventory
-            inventory.put("Standard", 3);
-            inventory.put("Deluxe", 2);
-            inventory.put("Suite", 1);
+// Manager class that handles add-on services
+class AddOnServiceManager {
 
-            allocatedRooms.put("Standard", new HashSet<>());
-            allocatedRooms.put("Deluxe", new HashSet<>());
-            allocatedRooms.put("Suite", new HashSet<>());
+    // ReservationID -> List of Services
+    private Map<String, List<Service>> reservationServices = new HashMap<>();
+
+
+    // Add service to reservation
+    public void addService(String reservationId, Service service) {
+
+        reservationServices.putIfAbsent(reservationId, new ArrayList<>());
+
+        reservationServices.get(reservationId).add(service);
+
+        System.out.println(service.getServiceName() +
+                " added to reservation " + reservationId);
+    }
+
+
+    // Display services for a reservation
+    public void displayServices(String reservationId) {
+
+        List<Service> services = reservationServices.get(reservationId);
+
+        if (services == null || services.isEmpty()) {
+            System.out.println("No services selected.");
+            return;
         }
 
-        // Add booking request
-        public void addBookingRequest(String guestName, String roomType) {
-            requestQueue.add(new BookingRequest(guestName, roomType));
-        }
+        System.out.println("Services for Reservation " + reservationId + ":");
 
-        // Process booking requests
-        public void processRequests() {
-
-            while (!requestQueue.isEmpty()) {
-
-                BookingRequest request = requestQueue.poll(); // FIFO
-                String roomType = request.roomType;
-
-                System.out.println("\nProcessing request for " + request.guestName + " (" + roomType + ")");
-
-                if (!inventory.containsKey(roomType) || inventory.get(roomType) == 0) {
-                    System.out.println("Reservation Failed: No rooms available");
-                    continue;
-                }
-
-                String roomId = generateRoomId(roomType);
-
-                // Record room ID
-                usedRoomIds.add(roomId);
-                allocatedRooms.get(roomType).add(roomId);
-
-                // Update inventory
-                inventory.put(roomType, inventory.get(roomType) - 1);
-
-                System.out.println("Reservation Confirmed!");
-                System.out.println("Assigned Room ID: " + roomId);
-            }
-        }
-
-        // Generate unique room ID
-        private String generateRoomId(String roomType) {
-
-            String roomId;
-
-            do {
-                roomId = roomType.substring(0, 2).toUpperCase() + "-" + UUID.randomUUID().toString().substring(0, 5);
-            } while (usedRoomIds.contains(roomId));
-
-            return roomId;
-        }
-
-
-        // Booking request model
-        static class BookingRequest {
-            String guestName;
-            String roomType;
-
-            BookingRequest(String guestName, String roomType) {
-                this.guestName = guestName;
-                this.roomType = roomType;
-            }
-        }
-
-        public static void main(String[] args) {
-
-            UseCaseBookMyStay service = new UseCaseBookMyStay();
-
-            // Sample requests
-            service.addBookingRequest("Nikhil", "Standard");
-            service.addBookingRequest("Bob", "Deluxe");
-            service.addBookingRequest("Charlie", "Standard");
-            service.addBookingRequest("David", "Suite");
-            service.addBookingRequest("Eva", "Standard");
-
-            service.processRequests();
+        for (Service s : services) {
+            System.out.println("- " + s.getServiceName() + " : ₹" + s.getCost());
         }
     }
+
+
+    // Calculate total cost of services
+    public double calculateTotalCost(String reservationId) {
+
+        double total = 0;
+
+        List<Service> services = reservationServices.get(reservationId);
+
+        if (services != null) {
+            for (Service s : services) {
+                total += s.getCost();
+            }
+        }
+
+        return total;
+    }
+}
+
+
+public class UseCaseBookMyStay {
+
+    public static void main(String[] args) {
+
+        AddOnServiceManager manager = new AddOnServiceManager();
+
+        String reservationId = "RES101";
+
+        // Guest selects services
+        Service breakfast = new Service("Breakfast", 500);
+        Service airportPickup = new Service("Airport Pickup", 1200);
+        Service spa = new Service("Spa Access", 1500);
+
+        manager.addService(reservationId, breakfast);
+        manager.addService(reservationId, airportPickup);
+        manager.addService(reservationId, spa);
+
+        System.out.println();
+
+        // Display selected services
+        manager.displayServices(reservationId);
+
+        // Calculate total cost
+        double total = manager.calculateTotalCost(reservationId);
+
+        System.out.println("\nTotal Additional Cost: ₹" + total);
+    }
+}
