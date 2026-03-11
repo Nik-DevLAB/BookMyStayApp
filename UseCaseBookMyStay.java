@@ -85,13 +85,12 @@ import java.util.*;
             }
         }
 
-
         public static void main(String[] args) {
 
             UseCaseBookMyStay service = new UseCaseBookMyStay();
 
             // Sample requests
-            service.addBookingRequest("Alice", "Standard");
+            service.addBookingRequest("Nikhil", "Standard");
             service.addBookingRequest("Bob", "Deluxe");
             service.addBookingRequest("Charlie", "Standard");
             service.addBookingRequest("David", "Suite");
